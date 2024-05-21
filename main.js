@@ -278,11 +278,11 @@ function startRecording(mediaStream, isSnapMode) {
   ]);
 
   if (isSnapMode) {
-    snapMediaRecorder = new MediaRecorder(mediaStreamWithAudio);
+    snapMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: 'video/webm; codecs=vp8,opus' });
     snapMediaRecorder.addEventListener('dataavailable', handleDataAvailable);
     snapMediaRecorder.start();
   } else {
-    standardMediaRecorder = new MediaRecorder(mediaStreamWithAudio);
+    standardMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: 'video/webm; codecs=vp8,opus' });
     standardMediaRecorder.addEventListener(
       'dataavailable',
       handleDataAvailable
@@ -321,7 +321,7 @@ function handleDataAvailable(event) {
     return;
   }
 
-  const blob = new Blob([event.data]);
+  const blob = new Blob([event.data], { type: 'video/webm' });
   downloadUrl = window.URL.createObjectURL(blob);
   downloadButton.disabled = false;
   recordedVideo.src = downloadUrl;
