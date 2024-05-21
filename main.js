@@ -31,7 +31,7 @@ document.querySelector('#app').innerHTML = `
       </button>
       <div id="video-container" class="hidden absolute top-0 left-0 w-full h-full z-40">
         <video id="recordedVideo" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg" width="640" height="480" controls autoplay playsinline></video>
-        <div class="absolute transform -translate-x-1/2 left-1/2 bottom-16 flex space-x-2">
+        <div class="absolute transform -translate-x-1/2 left-1/2 bottom-24 md:bottom-16 flex space-x-2">
           <button id="download" class="px-6 py-2.5 bg-white text-[#121212] rounded-full font-semibold">Download</button>
           <button id="retake" class="px-6 py-2.5 bg-white text-[#121212] rounded-full font-semibold">Retake</button>
         </div>
