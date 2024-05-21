@@ -23,7 +23,7 @@ document.querySelector('#app').innerHTML = `
       </div>
       <canvas id="canvas" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover rounded-lg"></canvas>
       <video id="standardVideo" class="hidden absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover transform scale-x-[-1] rounded-lg" width="640" height="480" muted></video>
-      <button id="toggleRecording" class="absolute transform -translate-x-1/2 left-1/2 bottom-24 md:bottom-8 w-16 h-16 hover:scale-110 transition-all">
+      <button id="toggleRecording" class="absolute transform -translate-x-1/2 left-1/2 bottom-20 md:bottom-8 w-16 h-16 hover:scale-110 transition-all">
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full rounded-full" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="50" fill="#fff"/>
           <circle cx="50" cy="50" r="40" fill="#f42b2c"/>
