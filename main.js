@@ -278,11 +278,11 @@ function startRecording(mediaStream, isSnapMode) {
   ]);
 
   if (isSnapMode) {
-    snapMediaRecorder = new MediaRecorder(mediaStreamWithAudio);
+    snapMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: 'video/mp4', videoBitsPerSecond : 100000 });
     snapMediaRecorder.addEventListener('dataavailable', handleDataAvailable);
     snapMediaRecorder.start();
   } else {
-    standardMediaRecorder = new MediaRecorder(mediaStreamWithAudio);
+    standardMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: 'video/mp4', videoBitsPerSecond : 100000 });
     standardMediaRecorder.addEventListener(
       'dataavailable',
       handleDataAvailable
