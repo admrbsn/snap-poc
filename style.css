@@ -18,7 +18,7 @@ input[type='checkbox'] {
 
 input[type='checkbox'],
 input[type='checkbox']:after,
-input[type='checkbox']l:before,
+input[type='checkbox']:before,
 .input[type='checkbox'] *,
 input[type='checkbox'] *:after,
 input[type='checkbox'] *:before,
