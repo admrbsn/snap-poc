@@ -31,12 +31,12 @@ document.querySelector('#app').innerHTML = `
       </button>
       <div id="video-container" class="hidden absolute top-0 left-0 w-full h-full z-40">
         <video id="recordedVideo" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg" width="640" height="480" controls autoplay playsinline></video>
-        <div class="absolute transform -translate-x-1/2 left-1/2 bottom-16 flex space-x-2">
+        <div class="absolute transform -translate-x-1/2 left-1/2 bottom-24 md:bottom-16 flex space-x-2">
           <button id="download" class="px-6 py-2.5 bg-white text-[#121212] rounded-full font-semibold">Download</button>
           <button id="retake" class="px-6 py-2.5 bg-white text-[#121212] rounded-full font-semibold">Retake</button>
         </div>
       </div>
-      <div id="recording-indicator" class="absolute top- left-3 md:top-auto md:bottom-3 md:right-3 md:left-auto w-20 flex items-center justify-center space-x-2 py-2 bg-[#121212] text-white rounded-full text-xs hidden">
+      <div id="recording-indicator" class="absolute top-4 left-4 md:top-auto md:bottom-3 md:right-3 md:left-auto w-20 flex items-center justify-center space-x-2 py-2 bg-[#121212] text-white rounded-full text-xs hidden">
         <div class="pulsate w-2 h-2 bg-[#f42b2c] rounded-full"></div>
         <span id="recording-duration">00:00</span>
       </div>
@@ -83,6 +83,8 @@ let recordingInterval;
 let cameraKit;
 let session;
 let activeLensDiv = null;
+
+const supportedMimeType = getSupportedMimeType();
 
 snapModeCheckbox.addEventListener('change', toggleMode);
 cameraButton.addEventListener('click', () => {
@@ -259,6 +261,22 @@ function attachLensesToContainer(lenses, session) {
   });
 }
 
+function getSupportedMimeType() {
+  const possibleMimeTypes = [
+    'video/webm; codecs=vp8,opus',
+    'video/webm; codecs=vp9,opus',
+    'video/mp4; codecs=avc1.42E01E,mp4a.40.2', // H.264 + AAC
+  ];
+
+  for (const mimeType of possibleMimeTypes) {
+    if (MediaRecorder.isTypeSupported(mimeType)) {
+      return mimeType;
+    }
+  }
+
+  return ''; // Return an empty string if no MIME type is supported
+}
+
 function startRecording(mediaStream, isSnapMode) {
   isRecording = true;
   toggleRecordingButton.innerHTML = `
@@ -278,16 +296,18 @@ function startRecording(mediaStream, isSnapMode) {
   ]);
 
   if (isSnapMode) {
-    snapMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: 'video/mp4' });
+    snapMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: supportedMimeType });
     snapMediaRecorder.addEventListener('dataavailable', handleDataAvailable);
     snapMediaRecorder.start();
   } else {
-    standardMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: 'video/mp4' });
-    standardMediaRecorder.addEventListener(
-      'dataavailable',
-      handleDataAvailable
-    );
-    standardMediaRecorder.start();
+    try {
+      standardMediaRecorder = new MediaRecorder(mediaStreamWithAudio, { mimeType: supportedMimeType });
+      standardMediaRecorder.addEventListener('dataavailable', handleDataAvailable);
+      standardMediaRecorder.start();
+    } catch (error) {
+      console.error('Error starting standardMediaRecorder:', error);
+      alert('Error starting recording. Please try again.');
+    }
   }
 
   // Mute playback to avoid audio echo
@@ -321,7 +341,7 @@ function handleDataAvailable(event) {
     return;
   }
 
-  const blob = new Blob([event.data]);
+  const blob = new Blob([event.data], { type: supportedMimeType });
   downloadUrl = window.URL.createObjectURL(blob);
   downloadButton.disabled = false;
   recordedVideo.src = downloadUrl;
