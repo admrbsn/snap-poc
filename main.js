@@ -277,6 +277,14 @@ function getSupportedMimeType() {
   return ''; // Return an empty string if no MIME type is supported
 }
 
+function getFileExtensionFromMimeType(mimeType) {
+  const mimeMap = {
+    'video/webm': 'webm',
+    'video/mp4': 'mp4',
+  };
+  return mimeMap[mimeType.split(';')[0]] || 'webm';
+}
+
 function startRecording(mediaStream, isSnapMode) {
   isRecording = true;
   toggleRecordingButton.innerHTML = `
@@ -351,9 +359,10 @@ function handleDataAvailable(event) {
 }
 
 function downloadVideo() {
+  const extension = getFileExtensionFromMimeType(supportedMimeType);
   const link = document.createElement('a');
   link.href = downloadUrl;
-  link.download = 'recording.webm';
+  link.download = `recording.${extension}`;
   link.click();
   recordedVideo.pause(); // Stop video playback
   recordedVideo.currentTime = 0; // Reset video to start
