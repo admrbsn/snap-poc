@@ -9,7 +9,7 @@ document.querySelector('#app').innerHTML = `
 <div class="w-screen h-dvh md:h-screen md:max-w-2xl md:flex md:items-center md:mx-auto">
   <div id="cameraWrapper" class="h-full md:h-auto md:p-6 md:bg-[#1e1e1e] md:rounded-lg">
     <div class="md:relative md:w-[768px] h-full md:h-auto md:aspect-[16/9] md:rounded-xl">
-      <div class="absolute top-4 right-4 z-30">
+      <div id="cameraButtonContainer" class="absolute top-4 right-4 z-30">
         <button id="cameraButton" class="w-8 h-8 flex items-center justify-center bg-black/30 rounded-full">
           <svg viewBox="0 0 100 100" fill="none" class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg">
             <circle cx="20" cy="50" r="10" fill="currentColor"/>
@@ -19,6 +19,19 @@ document.querySelector('#app').innerHTML = `
         </button>
         <div id="cameraSelect" class="hidden absolute top-10 right-0 w-44 bg-white shadow-lg rounded-lg p-2">
           <select id="cameras" class="w-full py-1 px-2 rounded text-sm appearance-none focus:outline-none focus:ring-0"></select>
+        </div>
+      </div>
+      <div id="micButtonContainer" class="absolute top-14 right-4 z-30">
+        <div id="micButton" class="w-8 h-8 flex items-center justify-center bg-black/30 rounded-full">
+          <svg id="mic-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 352 512" class="w-5 h-5">
+            <defs>
+              <linearGradient id="mic-gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop id="mic-gradient-start" offset="0%" stop-color="#78dd51"/>
+                <stop id="mic-gradient-end" offset="0%" stop-color="white"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#mic-gradient)" d="M176 352c53.02 0 96-42.98 96-96V96c0-53.02-42.98-96-96-96S80 42.98 80 96v160c0 53.02 42.98 96 96 96zm160-160h-16c-8.84 0-16 7.16-16 16v48c0 74.8-64.49 134.82-140.79 127.38C96.71 376.89 48 317.11 48 250.3V208c0-8.84-7.16-16-16-16H16c-8.84 0-16 7.16-16 16v40.16c0 89.64 63.97 169.55 152 181.69V464H96c-8.84 0-16 7.16-16 16v16c0 8.84 7.16 16 16 16h160c8.84 0 16-7.16 16-16v-16c0-8.84-7.16-16-16-16h-56v-33.77C285.71 418.47 352 344.9 352 256v-48c0-8.84-7.16-16-16-16z"/>
+          </svg>
         </div>
       </div>
       <canvas id="canvas" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full max-w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg"></canvas>
@@ -74,6 +87,8 @@ const lensesContainer = document.querySelector('.lenses-container');
 const cameraSelect = document.getElementById('cameras');
 const cameraButton = document.getElementById('cameraButton');
 const cameraSelectContainer = document.getElementById('cameraSelect');
+const cameraButtonContainer = document.getElementById('cameraButtonContainer');
+const micButtonContainer = document.getElementById('micButtonContainer');
 
 let snapMediaRecorder;
 let standardMediaRecorder;
@@ -85,6 +100,10 @@ let recordingInterval;
 let cameraKit;
 let session;
 let activeLensDiv = null;
+let audioContext;
+let analyser;
+let microphone;
+let javascriptNode;
 
 const supportedMimeType = getSupportedMimeType();
 
@@ -113,6 +132,7 @@ downloadButton.addEventListener('click', downloadVideo);
 retakeButton.addEventListener('click', () => {
   retakeRecording();
   resetCountdown();
+  showControls(); // Show controls again on retake
 });
 recordedVideo.addEventListener('ended', () => {
   standardVideo.muted = true; // Mute the standard video again when the preview ends
@@ -153,6 +173,7 @@ async function initStandard() {
     standardVideo.play();
     standardMediaStream = mediaStream;
     await populateCameraSelect();
+    initAudioAnalyser(mediaStream); // Initialize audio analyser
   } catch (error) {
     console.error('Error accessing media devices.', error);
   }
@@ -185,6 +206,7 @@ async function initSnap() {
 
   attachLensesToContainer(lenses, session);
   await populateCameraSelect();
+  initAudioAnalyser(mediaStream); // Initialize audio analyser
 }
 
 async function activateSnap() {
@@ -228,6 +250,7 @@ async function setStandardSource(deviceId) {
     standardVideo.srcObject = mediaStream;
     standardVideo.play();
     standardMediaStream = mediaStream;
+    initAudioAnalyser(mediaStream); // Initialize audio analyser
   } catch (error) {
     console.error('Error setting standard source.', error);
   }
@@ -311,6 +334,7 @@ function startCountdown(callback) {
       countdown.classList.add('hidden');
       clearInterval(countdownInterval);
       callback();
+      hideControls(); // Hide controls on recording start
     }
   }, 1000);
 }
@@ -319,6 +343,16 @@ function resetCountdown() {
   countdown.classList.add('hidden');
   countdown.style.opacity = 1;
   countdown.textContent = '3';
+}
+
+function hideControls() {
+  cameraButtonContainer.classList.add('hidden');
+  micButtonContainer.classList.add('hidden');
+}
+
+function showControls() {
+  cameraButtonContainer.classList.remove('hidden');
+  micButtonContainer.classList.remove('hidden');
 }
 
 function startRecording(mediaStream, isSnapMode) {
@@ -432,6 +466,38 @@ function startRecordingTimer() {
 function stopRecordingTimer() {
   clearInterval(recordingInterval);
   recordingDuration.textContent = '00:00';
+}
+
+function initAudioAnalyser(mediaStream) {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioContext.createAnalyser();
+  microphone = audioContext.createMediaStreamSource(mediaStream);
+  javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+  analyser.smoothingTimeConstant = 0.4;
+  analyser.fftSize = 1024;
+
+  microphone.connect(analyser);
+  analyser.connect(javascriptNode);
+  javascriptNode.connect(audioContext.destination);
+
+  javascriptNode.onaudioprocess = () => {
+    const array = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(array);
+    const values = array.reduce((a, b) => a + b, 0);
+    const average = values / array.length;
+
+    const volumePercentage = Math.min(average / 64, 1);
+    updateMicSvg(volumePercentage);
+  };
+}
+
+function updateMicSvg(volumePercentage) {
+  const micGradientStart = document.getElementById('mic-gradient-start');
+  const micGradientEnd = document.getElementById('mic-gradient-end');
+
+  micGradientStart.setAttribute('offset', `${volumePercentage * 100}%`);
+  micGradientEnd.setAttribute('offset', `${volumePercentage * 100}%`);
 }
 
 window.addEventListener('load', async () => {
