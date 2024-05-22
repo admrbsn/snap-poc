@@ -23,6 +23,7 @@ document.querySelector('#app').innerHTML = `
       </div>
       <canvas id="canvas" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full max-w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg"></canvas>
       <video id="standardVideo" class="hidden absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover transform scale-x-[-1] md:rounded-lg" width="768" height="432" muted playsinline></video>
+      <div id="countdown" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-6xl md:text-[9rem] font-semibold hidden"></div>
       <button id="toggleRecording" class="absolute transform -translate-x-1/2 left-1/2 bottom-20 md:bottom-8 w-16 h-16 hover:scale-110 transition-all">
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full rounded-full" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="50" fill="#fff"/>
@@ -60,6 +61,7 @@ document.querySelector('#app').innerHTML = `
 const cameraWrapper = document.getElementById('cameraWrapper');
 const liveRenderTarget = document.getElementById('canvas');
 const standardVideo = document.getElementById('standardVideo');
+const countdown = document.getElementById('countdown');
 const videoContainer = document.getElementById('video-container');
 const recordedVideo = document.getElementById('recordedVideo');
 const toggleRecordingButton = document.getElementById('toggleRecording');
@@ -98,15 +100,20 @@ toggleRecordingButton.addEventListener('click', () => {
       stopRecording(standardMediaRecorder);
     }
   } else {
-    if (snapModeCheckbox.checked) {
-      startRecording(snapMediaStream, true);
-    } else {
-      startRecording(standardMediaStream, false);
-    }
+    startCountdown(() => {
+      if (snapModeCheckbox.checked) {
+        startRecording(snapMediaStream, true);
+      } else {
+        startRecording(standardMediaStream, false);
+      }
+    });
   }
 });
 downloadButton.addEventListener('click', downloadVideo);
-retakeButton.addEventListener('click', retakeRecording);
+retakeButton.addEventListener('click', () => {
+  retakeRecording();
+  resetCountdown();
+});
 recordedVideo.addEventListener('ended', () => {
   standardVideo.muted = true; // Mute the standard video again when the preview ends
 });
@@ -289,6 +296,29 @@ function getFileExtensionFromMimeType(mimeType) {
     'video/mp4': 'mp4',
   };
   return mimeMap[mimeType.split(';')[0]] || 'webm';
+}
+
+function startCountdown(callback) {
+  let count = 3;
+  countdown.textContent = count;
+  countdown.classList.remove('hidden');
+  countdown.style.opacity = 1;
+  const countdownInterval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdown.textContent = count;
+    } else {
+      countdown.classList.add('hidden');
+      clearInterval(countdownInterval);
+      callback();
+    }
+  }, 1000);
+}
+
+function resetCountdown() {
+  countdown.classList.add('hidden');
+  countdown.style.opacity = 1;
+  countdown.textContent = '3';
 }
 
 function startRecording(mediaStream, isSnapMode) {
