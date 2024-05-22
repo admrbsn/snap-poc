@@ -8,7 +8,7 @@ import {
 document.querySelector('#app').innerHTML = `
 <div class="w-screen h-dvh md:h-screen md:max-w-2xl md:flex md:items-center md:mx-auto">
   <div id="cameraWrapper" class="h-full md:h-auto md:p-6 md:bg-[#1e1e1e] md:rounded-lg">
-    <div class="md:relative md:w-[640px] h-full md:h-auto md:aspect-[4/3] md:rounded-xl">
+    <div class="md:relative md:w-[768px] h-full md:h-auto md:aspect-[16/9] md:rounded-xl">
       <div class="absolute top-4 right-4 z-30">
         <button id="cameraButton" class="w-8 h-8 flex items-center justify-center bg-black/30 rounded-full">
           <svg viewBox="0 0 100 100" fill="none" class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg">
@@ -21,8 +21,8 @@ document.querySelector('#app').innerHTML = `
           <select id="cameras" class="w-full py-1 px-2 rounded text-sm appearance-none focus:outline-none focus:ring-0"></select>
         </div>
       </div>
-      <canvas id="canvas" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg"></canvas>
-      <video id="standardVideo" class="hidden absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover transform scale-x-[-1] md:rounded-lg" width="640" height="480" muted playsinline></video>
+      <canvas id="canvas" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full max-w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg"></canvas>
+      <video id="standardVideo" class="hidden absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover transform scale-x-[-1] md:rounded-lg" width="768" height="432" muted playsinline></video>
       <button id="toggleRecording" class="absolute transform -translate-x-1/2 left-1/2 bottom-20 md:bottom-8 w-16 h-16 hover:scale-110 transition-all">
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full rounded-full" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="50" fill="#fff"/>
@@ -30,7 +30,7 @@ document.querySelector('#app').innerHTML = `
         </svg>
       </button>
       <div id="video-container" class="hidden absolute top-0 left-0 w-full h-full z-40">
-        <video id="recordedVideo" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg" width="640" height="480" controls autoplay playsinline></video>
+        <video id="recordedVideo" class="absolute md:relative bottom-0 md:bottom-auto left-0 md:left-auto w-full md:w-auto h-dvh md:h-auto object-cover md:rounded-lg" width="768" height="432" controls autoplay playsinline></video>
         <div class="absolute transform -translate-x-1/2 left-1/2 bottom-24 md:bottom-16 flex space-x-2">
           <button id="download" class="px-6 py-2.5 bg-white text-[#121212] rounded-full font-semibold">Download</button>
           <button id="retake" class="px-6 py-2.5 bg-white text-[#121212] rounded-full font-semibold">Retake</button>
@@ -133,9 +133,12 @@ async function toggleMode() {
 
 async function initStandard() {
   try {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'user', // Use the front camera by default on mobile
+        width: isMobile ? { ideal: 1280 } : { ideal: 1920 },
+        height: isMobile ? { ideal: 720 } : { ideal: 1080 }
       },
       audio: true,
     });
@@ -154,9 +157,12 @@ async function initSnap() {
       'eyJhbGciOiJIUzI1NiIsImtpZCI6IkNhbnZhc1MyU0hNQUNQcm9kIiwidHlwIjoiSldUIn0.eyJhdWQiOiJjYW52YXMtY2FudmFzYXBpIiwiaXNzIjoiY2FudmFzLXMyc3Rva2VuIiwibmJmIjoxNzE1NzQwNjQ0LCJzdWIiOiI1ZTEyNzc2ZC1lYmM4LTQ2NDgtYmQ4Yi1mZDM1MDZkMWE3YjZ-U1RBR0lOR35iYTMzMDA2YS0yNGIwLTQxYzMtOGVjMS1hMjE5ZGU5ZWE5ZDcifQ.ez0U70EkHOCJpJN6JA42ARis37Tn77Ph6nkJqvsYvwg',
   });
   session = await cameraKit.createSession({ liveRenderTarget });
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const mediaStream = await navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: 'user', // Use the front camera by default on mobile
+      width: isMobile ? { ideal: 1280 } : { ideal: 1920 },
+      height: isMobile ? { ideal: 720 } : { ideal: 1080 }
     },
     audio: true,
   });
